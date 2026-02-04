@@ -5,4 +5,10 @@ use App\Http\Controllers\{
 };
 
 
-Route::get('/',[CategoryController::class, 'index']);
+Route::prefix('categories')->controller(CategoryController::class)->group(function () {
+    // Route::get('/trashed', 'trashed');
+    // Route::post('{id}/restore', 'restore');
+    // Route::delete('{id}/force-delete', 'forceDelete');
+    // Route::get('/get-list', 'getCategoryActive');
+    Route::apiResource('/', CategoryController::class)->parameter('', 'category');
+});
