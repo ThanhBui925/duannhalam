@@ -9,11 +9,12 @@ use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
-    use ApiResponseTrait;
+    use ApiResponseTrait, AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
@@ -31,16 +32,12 @@ class CategoryController extends Controller
     public function store(StoreCategoryRequest $request)
     {
         try {
-            // CHỈ LẤY DATA ĐÃ VALIDATE
             $data = $request->validated();
 
-            // TỰ SINH SLUG (KHUYÊN DÙNG)
             $data['slug_category'] = Str::slug($data['category_name']);
 
-            // STATUS MẶC ĐỊNH
             $data['status'] = $data['status'] ?? 'active';
 
-            // XỬ LÝ IMAGE (CHỈ LƯU PATH)
             if ($request->hasFile('image')) {
                 $data['image'] = $request->file('image')->store('categories', 'public');
             }
@@ -61,37 +58,52 @@ class CategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show($slug_category)
     {
-        //
+        $category = Category::where('slug_category',$slug_category)->first();
+        if(!$category){
+            return $this->error('Không tìm thấy danh mục', 404);
+        }
+        return $this->success($category, 'Xem danh mục thành công', 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCategoryRequest $request, $id)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
         try {
-            $category = Category::findOrFail($id);
-
-            // DỮ LIỆU HỢP LỆ DUY NHẤT
             $data = $request->validated();
 
-            $data['slug_category'] = Str::slug($data['category_name']);
-            
-            // XỬ LÝ IMAGE
+            // Chỉ tạo slug khi đổi tên
+            if (isset($data['category_name'])) {
+
+                $baseSlug = Str::slug($data['category_name']);
+                $slug = $baseSlug;
+                $count = 1;
+
+                while (
+                    Category::where('slug_category', $slug)
+                        ->where('id', '!=', $category->id)
+                        ->exists()
+                ) {
+                    $slug = $baseSlug . '-' . $count;
+                    $count++;
+                }
+
+                $data['slug_category'] = $slug;
+            }
+
+            // Upload ảnh
             if ($request->hasFile('image')) {
 
-                // xoá ảnh cũ
                 if ($category->image && Storage::disk('public')->exists($category->image)) {
                     Storage::disk('public')->delete($category->image);
                 }
 
-                // lưu ảnh mới (CHỈ LƯU PATH)
                 $data['image'] = $request->file('image')->store('categories', 'public');
             }
 
-            // UPDATE
             $category->update($data);
 
             return $this->success(
@@ -100,6 +112,7 @@ class CategoryController extends Controller
             );
 
         } catch (\Exception $e) {
+
             Log::error('Update category failed', [
                 'error' => $e->getMessage()
             ]);

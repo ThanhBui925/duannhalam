@@ -25,7 +25,7 @@ class UpdateCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $categoryId = (int) $this->route('category');
+        $categoryId = $this->route('category');
         return [
             'category_name' => [
                 'sometimes',
