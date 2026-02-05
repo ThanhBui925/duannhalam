@@ -20,5 +20,10 @@ class Category extends Model
     {
         return $this->hasMany(Product::class, 'category_id');
     }
+
+    public function getRouteKeyName()
+    {
+        return 'slug_category';
+    }
 }
 
