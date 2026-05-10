@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('category_name');
             $table->string('slug_category')->unique();
-            $table->string('status')->default('active');
+            $table->string('status')->default('1');
             $table->string('image')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
