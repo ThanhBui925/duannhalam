@@ -5,9 +5,10 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 
-class StoreProductRequest extends FormRequest
+class UpdateProductRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -29,7 +30,7 @@ class StoreProductRequest extends FormRequest
 
             'name' => 'required|string|max:255',
 
-            'slug' => 'nullable|string|max:255|unique:products,slug',
+            'slug' => 'nullable|string|max:255|unique:products,slug,' . $this->product->id,
 
             'price' => 'required|numeric|min:0',
 
@@ -41,7 +42,6 @@ class StoreProductRequest extends FormRequest
 
             'description' => 'nullable|string',
         ];
-
     }
 
     public function messages(): array
@@ -58,14 +58,14 @@ class StoreProductRequest extends FormRequest
 
             'quantity.required' => 'Số lượng không được để trống',
 
-            'image.image' => 'File phải là hình ảnh',
+             'image.image' => 'File phải là hình ảnh',
         ];
     }
 
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
-            'message' => 'Thêm sản phẩm thất bại !',
+            'message' => 'Cập nhật sản phẩm thất bại !',
             'errors' => $validator->errors(),
         ], 422));
     }
